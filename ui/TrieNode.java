@@ -26,8 +26,23 @@ public class TrieNode implements Comparable {
 
 	public void add(Vector<Song> a) {
 		for (int i = 0; i < a.size(); i++) {
+			String[] str = new String[100];
 			if (a.get(i) != null)
-				this.add(a.get(i).getTitle().toLowerCase(), a.get(i));
+				//this.add(a.get(i).getTitle().toLowerCase(), a.get(i));
+				str=a.get(i).getTitle().toLowerCase().split(" ");
+				for(int j=0;j<str.length;j++){
+					this.add(str[j],a.get(i));
+				}
+				str=a.get(i).getAlbum().toLowerCase().split(" ");
+				for(int j=0;j<str.length;j++){
+					this.add(str[j],a.get(i));
+				}
+				str=a.get(i).getArtist().toLowerCase().split(" ");
+				for(int j=0;j<str.length;j++){
+					this.add(str[j],a.get(i));
+				}
+				//this.add(a.get(i).getAlbum().toLowerCase(), a.get(i));
+				//this.add(a.get(i).getArtist().toLowerCase(), a.get(i));
 		}
 	}
 
@@ -134,6 +149,7 @@ public class TrieNode implements Comparable {
 		if (temp == null)
 			return null;
 		if (temp.end == true) {
+			if(!songNames.contains(temp.song))
 			songNames.add(temp.song);
 		}
 		auto_complete_Songs(temp, songNames);
@@ -147,6 +163,7 @@ public class TrieNode implements Comparable {
 		}
 		for (int i = 0; i < temp.children.size(); i++) {
 			if (temp.children.get(i).end == true) {
+				if(!songNames.contains(temp.children.get(i).song))
 				songNames.add(temp.children.get(i).song);
 			}
 			auto_complete_Songs(temp.children.get(i), songNames);

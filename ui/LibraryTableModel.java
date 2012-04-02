@@ -3,6 +3,7 @@ package iitm.apl.player.ui;
 import iitm.apl.player.Song;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
@@ -23,6 +24,9 @@ public class LibraryTableModel extends AbstractTableModel {
 	LibraryTableModel() {
 		songListing = new Vector<Song>();
 		songIterator = songListing.iterator();
+	}
+	public void sort(){
+		//Collections.sort(songListing);
 	}
 
 	public Vector<Song> getSong(){

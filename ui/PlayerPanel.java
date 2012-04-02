@@ -55,7 +55,7 @@ public class PlayerPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				if( player.getState() == State.PLAY )
 					player.setState(State.PAUSE);
-				else if( player.getState() == State.PAUSE )
+				else
 					player.setState(State.PLAY);
 			}
 		});
@@ -71,7 +71,7 @@ public class PlayerPanel extends JPanel {
 		add(stopButton);
 		
 		JButton nextButton = new JButton("Next");
-		nextButton.setEnabled( false );
+		prevButton.setEnabled( false );
 		nextButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

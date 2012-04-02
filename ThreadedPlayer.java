@@ -4,8 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,20 +43,19 @@ public class ThreadedPlayer implements Runnable {
 	// Listeners for when the player stops playing a song.
 	private EventListenerList listeners;
 
-	private Queue<Song> queuedSongs;
+	private Song song;
 
 	boolean debug = false;
 
 	public ThreadedPlayer() {
 		this.state = State.STOP;
 		listeners = new EventListenerList();
-		queuedSongs = new PriorityQueue<Song>();
 	}
 
 	@SuppressWarnings("unused")
 	private void dispose() {
 		running = false;
-		state = State.STOP;
+		setState(State.STOP);
 	}
 
 	public State getState() {
@@ -71,11 +68,9 @@ public class ThreadedPlayer implements Runnable {
 	public void setState(State st) {
 		stateLock.lock();
 		try {
-			if (st == State.PAUSE && state != State.PAUSE) {
-				state = st;
-			}
-			notPaused.signal();
 			state = st;
+			if (st != State.PAUSE)
+				notPaused.signal();
 		} finally {
 			stateLock.unlock();
 		}
@@ -108,9 +103,7 @@ public class ThreadedPlayer implements Runnable {
 			din = AudioSystem.getAudioInputStream(decodedFormat, in);
 
 			// Play now.
-			setState(State.PLAY);
 			rawPlay(decodedFormat, din);
-			setState(State.STOP);
 			in.close();
 
 		} catch (Exception e) {
@@ -156,15 +149,14 @@ public class ThreadedPlayer implements Runnable {
 
 				// Check if you have been paused; if so, wait until that state
 				// changes.
-
 				stateLock.lock();
 				try {
 					while (state == State.PAUSE) {
-
 						if (line.isRunning())
 							line.stop();
 						notPaused.await();
 					}
+
 				} finally {
 					stateLock.unlock();
 				}
@@ -192,19 +184,17 @@ public class ThreadedPlayer implements Runnable {
 		}
 	}
 
-	public void addSong(Song song) {
-		songLock.lock();
-		{
-			queuedSongs.add(song);
-			hasSong.signal();
-		}
-		songLock.unlock();
-	}
-
 	// Set the song
 	public void setSong(Song song) {
-		setState(State.STOP);
-		addSong(song);
+		songLock.lock();
+		stateLock.lock();
+		try {
+			this.song = song;
+			if (song != null)
+				hasSong.signal();
+		} finally {
+			songLock.unlock();
+		}
 	}
 
 	@Override
@@ -212,24 +202,26 @@ public class ThreadedPlayer implements Runnable {
 		// Keep running in a loop; When a song is set, play it.
 		running = true;
 		while (running) {
-			while (queuedSongs.isEmpty()) {
-				songLock.lock();
-				try {
+			songLock.lock();
+			try {
+				while (song == null) {
 					hasSong.await();
-				} catch (InterruptedException e) {
-					return;
-				} finally {
-					songLock.unlock();
 				}
+			} catch (InterruptedException e) {
+				return;
+			} finally {
+				songLock.unlock();
 			}
-			Song song = queuedSongs.remove();
 			// Play the song!
+			setState(State.PLAY);
 			playSong(song);
+			setSong(null);
+			setState(State.STOP);
 		}
 	}
 
 	// Action handling stuff
-
+	
 	public void addActionListener(ActionListener listener) {
 		listeners.add(ActionListener.class, listener);
 	}

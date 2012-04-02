@@ -219,9 +219,18 @@ public class JamPlayer {
 			public void actionPerformed(ActionEvent arg0) {
 				Vector<Song> songs = addFileDialog();
 				if (songs != null) {
-					libraryModel.add(songs);
-					trie.add(libraryModel.getSong());
-				}			
+					//libraryModel.add(songs);
+					//trie.add(libraryModel.getSong());
+					trie.add(songs);
+					ArrayList<Song> songNames = new ArrayList();
+					trie.auto_complete_Songs(trie, songNames);
+					for(int i=0;i<songNames.size();i++){
+						libraryModel.add(songNames.get(i));
+					}
+					libraryModel.resetIdx();
+					libraryModel.fireTableDataChanged();
+				}
+				
 			}
 		});
 		file.add(addSongs);
