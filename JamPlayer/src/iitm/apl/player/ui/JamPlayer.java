@@ -132,10 +132,6 @@ public class JamPlayer {
 					main_songs_search = songs_search[0];
 					if (main_songs_search != null) {
 						for (int k = 1; k <= count; k++) {
-							if(songs_search[k]==null && entered[k].length()!=0){
-								main_songs_search=null;
-								return;
-							}
 							for (int l = main_songs_search.size() - 1; l >= 0; l--) {
 								if (songs_search[k] != null
 										&& !songs_search[k]
