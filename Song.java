@@ -50,16 +50,52 @@ public class Song {
 		return header;
 	}
 
-	public String getArtist() {
-		return tag.getFirst(FieldKey.ARTIST);
+	public String getColumns( int column )
+	{
+	    if( column == 1 )
+	        return getTitle();
+	    else if( column == 2 )
+	        return getArtist();
+	    else if( column == 3 )
+	        return getAlbum();
+	    else
+	        return "";
+	}
+	
+	public String getArtist() 
+	{
+		 try
+		{
+		    return tag.getFirst(FieldKey.ARTIST);
+		}
+		catch( NullPointerException e)
+		{
+		    return " ";
+		}
 	}
 
-	public String getTitle() {
-		return tag.getFirst(FieldKey.TITLE);
+	public String getTitle() 
+	{
+		try
+		{
+		    return tag.getFirst(FieldKey.TITLE);
+		}
+		catch( NullPointerException e )
+		{
+		    return " ";
+		}
 	}
 
-	public String getAlbum() {
-		return tag.getFirst(FieldKey.ALBUM);
+	public String getAlbum() 
+	{
+		try
+		{
+		    return tag.getFirst(FieldKey.ALBUM);
+		}
+		catch( NullPointerException e )
+		{
+		    return " ";
+		}
 	}
 	
 	public int getDuration() {

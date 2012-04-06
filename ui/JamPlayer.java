@@ -20,21 +20,29 @@ import javax.swing.GroupLayout.Alignment;
  * TODO: a) Implement the search functionality b) Implement a play-list
  * generation feature
  */
-public class JamPlayer {
-
+public class JamPlayer 
+{
 	// UI Items
 	private JFrame mainFrame;
 	private PlayerPanel pPanel;
-	private TrieNode trie = new TrieNode();
+	private TrieNode trieTitle = new TrieNode();
+	private TrieNode trieArtist = new TrieNode();
+	private TrieNode trieAlbum = new TrieNode();
 	private JTable libraryTable;
 	private LibraryTableModel libraryModel;
-	private LibraryTableModel temp = new LibraryTableModel();
+	//private LibraryTableModel temp = new LibraryTableModel();
 	private Thread playerThread = null;
 	private ThreadedPlayer player = null;
 	private String entered = new String("");
-	private ArrayList<Song> songs_search = new ArrayList();
+	
+	private ArrayList<Song> songs_search = new ArrayList<Song>();
+	private ArrayList<Song> songsSearchTitle = new ArrayList<Song>();
+	private ArrayList<Song> songsSearchArtist = new ArrayList<Song>();
+	private ArrayList<Song> songsSearchAlbum = new ArrayList<Song>();
+	
 	JTextField searchText;
-	public JamPlayer() {
+	public JamPlayer() 
+	{
 		// Create the player
 		player = new ThreadedPlayer();
 		playerThread = new Thread(player);
@@ -44,9 +52,11 @@ public class JamPlayer {
 	/**
 	 * Create a file dialog to choose MP3 files to add
 	 */
-	private Vector<Song> addFileDialog() {
+	private Vector<Song> addFileDialog() 
+	{
 		JFileChooser chooser = new JFileChooser();
 		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		chooser.setCurrentDirectory( new File("/media/Documents/dc++/_downloads/test") );
 		int returnVal = chooser.showOpenDialog(null);
 		if (returnVal != JFileChooser.APPROVE_OPTION)
 			return null;
@@ -54,14 +64,18 @@ public class JamPlayer {
 		File selectedFile = chooser.getSelectedFile();
 		// Read files as songs
 		Vector<Song> songs = new Vector<Song>();
-		if (selectedFile.isFile()
-				&& selectedFile.getName().toLowerCase().endsWith(".mp3")) {
+		if (selectedFile.isFile() && selectedFile.getName().toLowerCase().endsWith(".mp3")) 
+		{
 			songs.add(new Song(selectedFile));
 			return songs;
-		} else if (selectedFile.isDirectory()) {
-			for (File file : selectedFile.listFiles(new FilenameFilter() {
+		} 
+		else if (selectedFile.isDirectory()) 
+		{
+			for (File file : selectedFile.listFiles(new FilenameFilter() 
+			{
 				@Override
-				public boolean accept(File dir, String name) {
+				public boolean accept(File dir, String name) 
+				{
 					return name.toLowerCase().endsWith(".mp3");
 				}
 			}))
@@ -75,7 +89,8 @@ public class JamPlayer {
 	 * Create the GUI and show it. For thread safety, this method should be
 	 * invoked from the event-dispatching thread.
 	 */
-	private void createAndShowGUI() {
+	private void createAndShowGUI() 
+	{
 		// Create and set up the window.
 		mainFrame = new JFrame("JamPlayer");
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -92,30 +107,53 @@ public class JamPlayer {
 		GroupLayout layout = new GroupLayout(mainPanel);
 		mainPanel.setLayout(layout);
 
+		JPanel testButtonPane = new JPanel();
+		testButtonPane.add( new JButton("lskdj"));
+		
 		pPanel = new PlayerPanel(player);
 		JLabel searchLabel = new JLabel("Search: ");
 		JTextField searchText = new JTextField(200);
 		// searchText.setEditable(true);
 		searchText.setMaximumSize(new Dimension(200, 20));
-		searchText.addKeyListener(new KeyListener() {
+		searchText.addKeyListener(new KeyListener() 
+		{
 			// Takes the search string from user
-			// searches for a song in the trie tree
+			// searches for a song in the trieTitle tree
 			// if songs exists updates the table
 			// if search text field is empty outputs all songs into the table
 			@Override
-			public void keyTyped(KeyEvent arg0) {
+			public void keyTyped(KeyEvent arg0) 
+			{
 				char c = arg0.getKeyChar();
-				if (!(c == '\b' && entered.length() == 0)) {
-					if (c == '\b') {
+				if (!(c == '\b' && entered.length() == 0)) 
+				{
+					if (c == '\b')
+					{
 						entered = entered.substring(0, entered.length() - 1);
-					} else {
+					} 
+					else 
+					{
 						entered += c;
 					}
 					entered = entered.toLowerCase();
-					songs_search = trie.retSongs(entered);
-
-					if (songs_search != null) {
-						for (int i = 0; i < songs_search.size(); i++) {
+					
+					songsSearchTitle = trieTitle.retSongs(entered);
+					songsSearchArtist = trieArtist.retSongs( entered );
+					songsSearchAlbum = trieAlbum.retSongs( entered );
+					
+					//songs_search = songsSearchTitle;
+					//songs_search.re
+					songsSearchArtist.removeAll( songsSearchTitle );
+					songsSearchAlbum.removeAll( songsSearchTitle );
+					songsSearchAlbum.removeAll( songsSearchArtist );
+					songsSearchTitle.addAll( songsSearchArtist );
+					songsSearchTitle.addAll( songsSearchAlbum );
+					songs_search = songsSearchTitle;
+					
+					if (songs_search != null) 
+					{
+						for (int i = 0; i < songs_search.size(); i++)
+						{
 							System.out.println(songs_search.get(i).getTitle()
 									.toLowerCase());
 
@@ -124,12 +162,14 @@ public class JamPlayer {
 
 					libraryModel.deleteAll();
 					for (int i = 0; songs_search != null
-							&& i < songs_search.size(); i++) {
+							&& i < songs_search.size(); i++) 
+					{
 						libraryModel.add(songs_search.get(i));
 					}
-					if (entered.length() == 0) {
-						ArrayList<Song> array = new ArrayList();
-						trie.auto_complete_Songs(trie, array);
+					if (entered.length() == 0) 
+					{
+						ArrayList<Song> array = new ArrayList<Song>();
+						trieTitle.auto_complete_Songs(trieTitle, array);
 						libraryModel.add(array);
 					}
 					libraryModel.fireTableDataChanged(); 
@@ -146,39 +186,50 @@ public class JamPlayer {
 			}
 
 			@Override
-			public void keyReleased(KeyEvent arg0) {
+			public void keyReleased(KeyEvent arg0) 
+			{
 			}
 
 			@Override
-			public void keyPressed(KeyEvent arg0) {
+			public void keyPressed(KeyEvent arg0)
+			{
 			}
 		});
 
 		libraryModel = new LibraryTableModel();
 		libraryTable = new JTable(libraryModel);
-		libraryTable.addMouseListener(new MouseListener() {
+		libraryTable.addMouseListener(new MouseListener() 
+		{
 
 			@Override
-			public void mouseReleased(MouseEvent arg0) {
+			public void mouseReleased(MouseEvent arg0) 
+			{
 			}
 
 			@Override
-			public void mousePressed(MouseEvent arg0) {
+			public void mousePressed(MouseEvent arg0) 
+			{
 			}
 
 			@Override
-			public void mouseExited(MouseEvent arg0) {
+			public void mouseExited(MouseEvent arg0) 
+			{
 			}
 
 			@Override
-			public void mouseEntered(MouseEvent arg0) {
+			public void mouseEntered(MouseEvent arg0) 
+			{
 			}
 
 			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				if (arg0.getClickCount() > 1) {
+			public void mouseClicked(MouseEvent arg0) 
+			{
+			    System.out.println("hello");
+				if (arg0.getClickCount() > 1) 
+				{
 					Song song = libraryModel.get(libraryTable.getSelectedRow());
-					if (song != null) {
+					if (song != null) 
+					{
 						player.setSong(song);
 						pPanel.setSong(song);
 					}
@@ -186,8 +237,7 @@ public class JamPlayer {
 			}
 		});
 
-		libraryTable
-				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		libraryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		JScrollPane libraryPane = new JScrollPane(libraryTable);
 
 		layout.setHorizontalGroup(layout.createParallelGroup(Alignment.CENTER)
@@ -197,12 +247,12 @@ public class JamPlayer {
 										searchText).addContainerGap())
 				.addComponent(libraryPane));
 
-		layout.setVerticalGroup(layout.createSequentialGroup().addComponent(
-				pPanel).addContainerGap().addGroup(
+		layout.setVerticalGroup(layout.createSequentialGroup().
+		        addContainerGap().addComponent(pPanel).addGroup(
 				layout.createParallelGroup(Alignment.CENTER).addComponent(
 						searchLabel).addComponent(searchText)).addComponent(
 				libraryPane));
-
+		//searchText.setActionCommand( "disable" );
 		pane.add(mainPanel, BorderLayout.CENTER);
 
 		// Display the window.
@@ -210,21 +260,29 @@ public class JamPlayer {
 		mainFrame.setVisible(true);
 	}
 
-	private JMenuBar createMenuBar() {
+	private JMenuBar createMenuBar() 
+	{
 		JMenuBar mbar = new JMenuBar();
 		JMenu file = new JMenu("File");
 		JMenuItem addSongs = new JMenuItem("Add new files to library");
-		addSongs.addActionListener(new ActionListener() {
+		addSongs.addActionListener(new ActionListener() 
+		{
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
+			public void actionPerformed(ActionEvent arg0) 
+			{
 				Vector<Song> songs = addFileDialog();
-				if (songs != null) {
+				if (songs != null)
+				{
 					//libraryModel.add(songs);
-					//trie.add(libraryModel.getSong());
-					trie.add(songs);
-					ArrayList<Song> songNames = new ArrayList();
-					trie.auto_complete_Songs(trie, songNames);
-					for(int i=0;i<songNames.size();i++){
+					//trieTitle.add(libraryModel.getSong());
+					trieTitle.add( songs, 1 );               //1 means add songs to trie in order of Title
+					trieArtist.add( songs, 2 );              //2 means Artist
+					trieAlbum.add( songs, 3 );               //3 means Album
+					
+					ArrayList<Song> songNames = new ArrayList<Song>();
+					trieTitle.auto_complete_Songs(trieTitle, songNames);
+					for(int i=0;i<songNames.size();i++)
+					{
 						libraryModel.add(songNames.get(i));
 					}
 					libraryModel.resetIdx();
@@ -236,20 +294,24 @@ public class JamPlayer {
 		file.add(addSongs);
 
 		JMenuItem createPlaylist = new JMenuItem("Create playlist");
-		createPlaylist.addActionListener(new ActionListener() {
+		createPlaylist.addActionListener(new ActionListener() 
+		{
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(ActionEvent e)
+			{
 				createPlayListHandler();
 			}
 		});
 		file.add(createPlaylist);
 
 		JMenuItem quitItem = new JMenuItem("Quit");
-		quitItem.addActionListener(new ActionListener() {
+		quitItem.addActionListener(new ActionListener() 
+		{
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(ActionEvent e)
+			{
 				mainFrame.dispose();
 			}
 		});
@@ -260,7 +322,8 @@ public class JamPlayer {
 		return mbar;
 	}
 
-	protected void createPlayListHandler() {
+	protected void createPlayListHandler()
+	{
 		// TODO: Create a dialog window allowing the user to choose length of
 		// play list, and a play list you create that best fits the time
 		// specified
@@ -268,19 +331,23 @@ public class JamPlayer {
 		dialog.setVisible(true);
 	}
 
-	public Vector<Song> getSongList() {
+	public Vector<Song> getSongList() 
+	{
 		Vector<Song> songs = new Vector<Song>();
 		for (int i = 0; i < libraryModel.getRowCount(); i++)
 			songs.add(libraryModel.get(i));
 		return songs;
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		// Schedule a job for the event-dispatching thread:
 		// creating and showing this application's GUI.
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+		javax.swing.SwingUtilities.invokeLater(new Runnable() 
+		{
 			@Override
-			public void run() {
+			public void run() 
+			{
 				JamPlayer player = new JamPlayer();
 				player.createAndShowGUI();
 			}
